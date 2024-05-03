@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      /* 元素的值在或者不在数组中 */
+      const binarySearch = (list, value) => {
+        // 拿到中间值
+        let start = 0;
+        let end = list.length - 1;
+        let i = start + Math.floor((end - start) / 2);
+        // 循环条件就是list[i] !== value 也就是还没找到，就需要一直找
+        while (list[i] !== value) {
+          if (end - start === 1) {
+            // 到这里了，就是start 与 i相等了，因为i的计算方法是向下取整
+            // 两种情况进入这里，此时list[i]也就是list[start]还不是要找的值
+            // 那么要么就是list[end]是要找的值，要么就是没有这个值
+            console.log("start", start);
+            console.log("i", i);
+            if (list[end] === value) {
+              return end;
+            }
+            return -1;
+          }
+          if (list[i] > value) {
+            // 值在start-i之间
+            // start 不变
+            end = i;
+            // i = start + Math.floor((end - start) / 2);
+          } else if (list[i] < value) {
+            // 值在i-end之间
+            start = i;
+            // end不变
+            // i = start + Math.floor((end - start) / 2);
+          }
+          // 重新计算i
+          // i会等于start，但是不等于end
+          // 假设该值在end位置，那么就会取不到
+          i = start + Math.floor((end - start) / 2);
+        }
+        console.log(i);
+        return i;
+      };
+      // 15个
+      const arr = [
+        1, 3, 4, 8, 10, 35, 67, 83, 90, 120, 142, 159, 178, 213, 232, 254,
+      ];
+      console.log(binarySearch(arr, 254));
+    </script>
+  </body>
+</html>
