@@ -1,6 +1,9 @@
 <template>
   <div class="about">
-    <VirtualScroll :listData="listData"></VirtualScroll>
+    <VirtualScroll
+      :listData="listData"
+      :estimatedItemSize="100"
+    ></VirtualScroll>
   </div>
 </template>
 <script>

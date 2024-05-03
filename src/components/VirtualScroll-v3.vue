@@ -64,7 +64,6 @@ export default {
       listHeight: 0,
       // 列表渲染后存储每一项的高度以及位置
       positions: [],
-      showIndex: 0,
     };
   },
   computed: {
@@ -80,11 +79,42 @@ export default {
     bufferCount() {
       return this.bufferScale * this.visibleCount;
     },
+    /* startIndex(scrollTop = 0) {
+      // 起始索引，找到 bottom 位置大于 scrollTop 的元素
+      // 由于this.positions是顺序排列的数组，可以用二分查找法
+      let item = this.positions.find((i) => i && i.bottom > scrollTop);
+      // let item = this.binarySearch(this.positions, scrollTop)
+      return item.index;
+      // return Math.floor(this.scrollTop / this.itemSize);
+    }, */
     endIndex() {
       return this.startIndex + this.visibleCount;
     },
+    // startOffset() {
+    //   // 滚动到
+    //   /* if (this.startIndex >= 1) {
+    //     return this.positions[this.startIndex - 1].bottom;
+    //   } else {
+    //     return 0;
+    //   } */
+    //   // const bufferSize = this.bufferCount * this.itemSize;
+    //   // const showIndex = this.startIndex + this.bufferCount;
+    //   const h = this.positions[this.startIndex].top;
+    //   // this.positions(())
+    //   if (this.scrollTop > h) {
+    //     // return this.scrollTop - bufferSize - (this.scrollTop % this.itemSize);
+    //     return (
+    //       this.scrollTop -
+    //       this.positions[this.startIndex].top -
+    //       this.positions[this.startIndex].height
+    //     );
+    //   } else {
+    //     return 0;
+    //   }
+    // },
     listTranslate() {
       return `translate(0px, ${this.startOffset}px)`;
+      // return `translate(0px, ${this.getStartIndex()}px)`;
     },
     aboveCount() {
       return Math.min(this.startIndex, this.bufferCount);
@@ -93,10 +123,11 @@ export default {
       return Math.min(this.endIndex, this.bufferCount);
     },
     visibleData() {
-      const start = this.startIndex - this.aboveCount;
+      /* const start = this.startIndex - this.aboveCount;
       const end = this.endIndex + this.belowCount;
       console.log(start, end);
-      return this.listData.slice(start, end);
+      return this.listData.slice(start, end); */
+      return this.listData.slice(this.startIndex, this.endIndex);
     },
   },
   methods: {
@@ -106,15 +137,25 @@ export default {
       // 所以bottom>scrollTop时，当前元素展示为第一个
       // 由于this.positions是顺序排列的数组，可以用二分查找法
       // let item = this.positions.find((i) => i && i.bottom > scrollTop);
-      // 这个条件下找出来的是显示在可视区域的第一个元素
-      // this.showIndex = item.index;
-      return this.binarySearch(this.positions, scrollTop);
+      let index = this.binarySearch(this.positions, scrollTop);
+      console.log("item.index", index);
+      return index;
+      // return Math.floor(this.scrollTop / this.itemSize);
     },
     getStartOffset() {
+      // 滚动到
+      /* if (this.startIndex >= 1) {
+        return this.positions[this.startIndex - 1].bottom;
+      } else {
+        return 0;
+      } */
+      // const bufferSize = this.bufferCount * this.itemSize;
+      // const showIndex = this.startIndex + this.bufferCount;
+      // this.positions(())
       console.log(this.positions[this.startIndex]);
-      console.log("bufferCount", this.bufferCount);
-      // 展示的索引大于上面缓冲区的数量时
-      if (this.startIndex > this.bufferCount) {
+      if (this.startIndex >= 1) {
+        // const h = this.positions[this.startIndex].top;
+        // return this.scrollTop - bufferSize - (this.scrollTop % this.itemSize);
         return this.positions[this.startIndex].top;
       } else {
         return 0;
@@ -124,9 +165,9 @@ export default {
       this.scrollTop = event.target.scrollTop;
       console.log("scrollTop", event.target.scrollTop);
       this.startIndex = this.getStartIndex(this.scrollTop);
-      console.log("startIndex", this.startIndex);
       this.startOffset = this.getStartOffset();
-      console.log("startOffset", this.startOffset);
+      console.log("startIndex", this.startIndex);
+      // console.log("startOffset", this.startOffset);
     },
     initPositions() {
       // console.log(this.listData);
@@ -146,7 +187,7 @@ export default {
       // 拿到中间值
       let start = 0;
       let end = list.length - 1;
-      let index = end; // 超出范围时，取最后一个值
+      let index = -1;
       let i = 0;
       while (end - start > 1) {
         i = Math.floor((start + end) / 2);
@@ -163,7 +204,6 @@ export default {
       if (list[start].bottom > value) {
         index = start;
       } else if (list[end].bottom > value) {
-        // 这里是修改后的end
         index = end;
       }
       return index;
