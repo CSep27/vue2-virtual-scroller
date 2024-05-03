@@ -16,10 +16,11 @@
       <li
         ref="items"
         class="vs-item"
-        v-for="(item, key) in visibleData"
-        :key="key"
+        v-for="item in visibleData"
+        :key="item.id"
+        :id="item.id"
       >
-        item {{ item }}
+        item {{ item.text }}
       </li>
     </ul>
   </div>
@@ -65,6 +66,7 @@ export default {
       // 列表渲染后存储每一项的高度以及位置
       positions: [],
       showIndex: 0,
+      isPositionsUpdated: false,
     };
   },
   computed: {
@@ -95,7 +97,7 @@ export default {
     visibleData() {
       const start = this.startIndex - this.aboveCount;
       const end = this.endIndex + this.belowCount;
-      console.log(start, end);
+      console.log("start, end", start, end);
       return this.listData.slice(start, end);
     },
   },
@@ -168,35 +170,53 @@ export default {
       }
       return index;
     },
+    updatePositions() {
+      if (this.isPositionsUpdated) {
+        return;
+      }
+      // debugger;
+      console.log("updated————————");
+      // 渲染完成后，获取列表每项的位置信息
+      const nodes = this.$refs.items;
+      // console.log(nodes);
+      let index = 0;
+      nodes.forEach((node) => {
+        // Element.getBoundingClientRect() 方法返回一个 DOMRect 对象，其提供了元素的大小及其相对于视口的位置。
+        const rect = node.getBoundingClientRect();
+        const height = rect.height;
+        // 把id字符串变成数字，当前渲染的DOM结构
+        index = +node.id;
+        const oldHeight = this.positions[index].height;
+        const diffValue = oldHeight - height;
+        if (diffValue) {
+          // 更新当前元素
+          this.positions[index].bottom =
+            this.positions[index].bottom - diffValue;
+          this.positions[index].height = height;
+          // 更新后续所有元素
+          for (let k = index + 1; k < this.positions.length; k++) {
+            this.positions[k].top = this.positions[k - 1].bottom;
+            this.positions[k].bottom = this.positions[k].bottom - diffValue;
+          }
+        }
+      });
+      this.listHeight = this.positions[this.positions.length - 1].bottom;
+      // 增加index判断，已经全部更新完成
+      if (index === this.positions.length - 1) {
+        this.isPositionsUpdated = true;
+      }
+    },
+  },
+  created() {
+    // debugger;
   },
   mounted() {
+    // debugger;
     this.initPositions();
     this.listHeight = this.positions[this.positions.length - 1].bottom;
   },
   updated() {
-    // 渲染完成后，获取列表每项的位置信息
-    const nodes = this.$refs.items;
-    // console.log(nodes);
-    nodes.forEach((node, index) => {
-      // Element.getBoundingClientRect() 方法返回一个 DOMRect 对象，其提供了元素的大小及其相对于视口的位置。
-      const rect = node.getBoundingClientRect();
-      const height = rect.height;
-      // ?
-      // const index = +node.id.slice(1);
-      const oldHeight = this.positions[index].height;
-      const diffValue = oldHeight - height;
-      if (diffValue) {
-        // 更新当前元素
-        this.positions[index].bottom = this.positions[index].bottom - diffValue;
-        this.positions[index].height = height;
-        // 更新后续所有元素
-        for (let k = index + 1; k < this.positions.length; k++) {
-          this.positions[k].top = this.positions[k - 1].bottom;
-          this.positions[k].bottom = this.positions[k].bottom - diffValue;
-        }
-      }
-    });
-    this.listHeight = this.positions[this.positions.length - 1].bottom;
+    this.updatePositions();
   },
 };
 </script>

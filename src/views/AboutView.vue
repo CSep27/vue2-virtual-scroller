@@ -25,7 +25,10 @@ export default {
         for (let j = 0; j < r; j++) {
           s += "b";
         }
-        this.listData.push(s);
+        this.listData.push({
+          id: index,
+          text: s,
+        });
       }
     },
   },
