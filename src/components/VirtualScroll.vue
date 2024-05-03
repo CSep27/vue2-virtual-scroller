@@ -113,11 +113,13 @@ export default {
       return this.binarySearch(this.positions, scrollTop);
     },
     getStartOffset() {
-      console.log(this.positions[this.startIndex]);
-      console.log("bufferCount", this.bufferCount);
-      // 展示的索引大于上面缓冲区的数量时
+      // this.startIndex - this.aboveCount  也就是第一个渲染的元素，已经被卷到窗口外面了
+      // 需要拿到它的top值，也就是需要平移的距离
+      // 当满足this.startIndex > this.aboveCount时，也就是this.aboveCount取值为this.bufferCount时
       if (this.startIndex > this.bufferCount) {
-        return this.positions[this.startIndex].top;
+        const renderStartIndex = this.startIndex - this.bufferCount;
+        console.log("renderStartIndex", renderStartIndex);
+        return this.positions[renderStartIndex].top;
       } else {
         return 0;
       }
@@ -248,5 +250,8 @@ export default {
   &:nth-child(2n + 1) {
     background-color: #f5ebff;
   } */
+  &:last-child {
+    border-bottom: none;
+  }
 }
 </style>
