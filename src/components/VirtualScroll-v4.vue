@@ -33,6 +33,10 @@ export default {
       type: Number,
       default: 500,
     },
+    /* itemSize: {
+      type: Number,
+      default: 50,
+    }, */
     listData: {
       type: Array,
       default: () => [],
@@ -50,19 +54,28 @@ export default {
   },
   data() {
     return {
+      // screenHeight: 500,
+      // itemSize: 50,
+      // listData: [],
       scrollTop: 0,
-      // 可视区的第一项索引
+      // visibleData: [],
       startIndex: 0,
+      // endIndex: 0,
       startOffset: 0,
+      listHeight: 0,
+      // 列表渲染后存储每一项的高度以及位置
+      positions: [],
+      showIndex: 0,
       isPositionsUpdated: false,
     };
   },
   computed: {
-    listHeight() {
-      return this.positions.length > 0
-        ? this.positions[this.positions.length - 1].bottom
-        : 0;
-    },
+    /* listHeight() {
+      console.log(this.positions);
+      // return this.listData.length * this.itemSize;
+      // 列表高度不固定，那么高度就是最后一项的底部距离列表顶部的位置
+      return this.positions[this.positions.length - 1].bottom;
+    }, */
     visibleCount() {
       return Math.ceil(this.screenHeight / this.estimatedItemSize);
     },
@@ -88,15 +101,6 @@ export default {
       return this.listData.slice(start, end);
     },
   },
-  created() {
-    // 不需要变成响应式数据
-    // 列表渲染后存储每一项的高度以及位置
-    this.positions = [];
-    this.initPositions();
-  },
-  updated() {
-    this.updatePositions();
-  },
   methods: {
     getStartIndex(scrollTop = 0) {
       // 起始索引，找到 bottom 位置大于 scrollTop 的元素，就是当前需要展示的第一个元素
@@ -105,6 +109,7 @@ export default {
       // 由于this.positions是顺序排列的数组，可以用二分查找法
       // let item = this.positions.find((i) => i && i.bottom > scrollTop);
       // 这个条件下找出来的是显示在可视区域的第一个元素
+      // this.showIndex = item.index;
       return this.binarySearch(this.positions, scrollTop);
     },
     getStartOffset() {
@@ -128,6 +133,7 @@ export default {
       console.log("startOffset", this.startOffset);
     },
     initPositions() {
+      // console.log(this.listData);
       this.positions = this.listData.map((item, index) => {
         return {
           index,
@@ -170,9 +176,11 @@ export default {
       if (this.isPositionsUpdated) {
         return;
       }
+      // debugger;
       console.log("updated————————");
       // 渲染完成后，获取列表每项的位置信息
       const nodes = this.$refs.items;
+      // console.log(nodes);
       let index = 0;
       nodes.forEach((node) => {
         // Element.getBoundingClientRect() 方法返回一个 DOMRect 对象，其提供了元素的大小及其相对于视口的位置。
@@ -194,11 +202,19 @@ export default {
           }
         }
       });
+      this.listHeight = this.positions[this.positions.length - 1].bottom;
       // 增加index判断，已经全部更新完成
       if (index === this.positions.length - 1) {
         this.isPositionsUpdated = true;
       }
     },
+  },
+  mounted() {
+    this.initPositions();
+    this.listHeight = this.positions[this.positions.length - 1].bottom;
+  },
+  updated() {
+    this.updatePositions();
   },
 };
 </script>
