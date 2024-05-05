@@ -37,7 +37,7 @@ export default {
       type: Array,
       default: () => [],
     },
-    //缓冲区比例
+    // 缓冲区比例
     bufferScale: {
       type: Number,
       default: 1,
@@ -108,7 +108,7 @@ export default {
       return this.binarySearch(this.positions, scrollTop);
     },
     getStartOffset() {
-      // this.startIndex - this.aboveCount  也就是第一个渲染的元素，已经被卷到窗口外面了
+      // this.startIndex - this.aboveCount  也就是缓存区本来渲染的第一个元素，开始不展示了
       // 需要拿到它的top值，也就是需要平移的距离
       // 当满足this.startIndex > this.aboveCount时，也就是this.aboveCount取值为this.bufferCount时
       if (this.startIndex > this.bufferCount) {

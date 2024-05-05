@@ -16,10 +16,11 @@
       <li
         ref="items"
         class="vs-item"
-        v-for="(item, key) in visibleData"
-        :key="key"
+        v-for="item in visibleData"
+        :key="item.id"
+        :id="item.id"
       >
-        item {{ item }}
+        item {{ item.text }}
       </li>
     </ul>
   </div>
@@ -32,15 +33,11 @@ export default {
       type: Number,
       default: 500,
     },
-    /* itemSize: {
-      type: Number,
-      default: 50,
-    }, */
     listData: {
       type: Array,
       default: () => [],
     },
-    //缓冲区比例
+    // 缓冲区比例
     bufferScale: {
       type: Number,
       default: 1,
@@ -53,68 +50,30 @@ export default {
   },
   data() {
     return {
-      // screenHeight: 500,
-      // itemSize: 50,
-      // listData: [],
       scrollTop: 0,
-      // visibleData: [],
+      // 可视区的第一项索引
       startIndex: 0,
-      // endIndex: 0,
       startOffset: 0,
-      listHeight: 0,
-      // 列表渲染后存储每一项的高度以及位置
-      positions: [],
+      isPositionsUpdated: false,
     };
   },
   computed: {
-    /* listHeight() {
-      console.log(this.positions);
-      // return this.listData.length * this.itemSize;
-      // 列表高度不固定，那么高度就是最后一项的底部距离列表顶部的位置
-      return this.positions[this.positions.length - 1].bottom;
-    }, */
+    listHeight() {
+      return this.positions.length > 0
+        ? this.positions[this.positions.length - 1].bottom
+        : 0;
+    },
     visibleCount() {
       return Math.ceil(this.screenHeight / this.estimatedItemSize);
     },
     bufferCount() {
       return this.bufferScale * this.visibleCount;
     },
-    /* startIndex(scrollTop = 0) {
-      // 起始索引，找到 bottom 位置大于 scrollTop 的元素
-      // 由于this.positions是顺序排列的数组，可以用二分查找法
-      let item = this.positions.find((i) => i && i.bottom > scrollTop);
-      // let item = this.binarySearch(this.positions, scrollTop)
-      return item.index;
-      // return Math.floor(this.scrollTop / this.itemSize);
-    }, */
     endIndex() {
       return this.startIndex + this.visibleCount;
     },
-    // startOffset() {
-    //   // 滚动到
-    //   /* if (this.startIndex >= 1) {
-    //     return this.positions[this.startIndex - 1].bottom;
-    //   } else {
-    //     return 0;
-    //   } */
-    //   // const bufferSize = this.bufferCount * this.itemSize;
-    //   // const showIndex = this.startIndex + this.bufferCount;
-    //   const h = this.positions[this.startIndex].top;
-    //   // this.positions(())
-    //   if (this.scrollTop > h) {
-    //     // return this.scrollTop - bufferSize - (this.scrollTop % this.itemSize);
-    //     return (
-    //       this.scrollTop -
-    //       this.positions[this.startIndex].top -
-    //       this.positions[this.startIndex].height
-    //     );
-    //   } else {
-    //     return 0;
-    //   }
-    // },
     listTranslate() {
       return `translate(0px, ${this.startOffset}px)`;
-      // return `translate(0px, ${this.getStartIndex()}px)`;
     },
     aboveCount() {
       return Math.min(this.startIndex, this.bufferCount);
@@ -123,12 +82,20 @@ export default {
       return Math.min(this.endIndex, this.bufferCount);
     },
     visibleData() {
-      /* const start = this.startIndex - this.aboveCount;
+      const start = this.startIndex - this.aboveCount;
       const end = this.endIndex + this.belowCount;
-      console.log(start, end);
-      return this.listData.slice(start, end); */
-      return this.listData.slice(this.startIndex, this.endIndex);
+      console.log("start, end", start, end);
+      return this.listData.slice(start, end);
     },
+  },
+  created() {
+    // 不需要变成响应式数据
+    // 列表渲染后存储每一项的高度以及位置
+    this.positions = [];
+    this.initPositions();
+  },
+  updated() {
+    this.updatePositions();
   },
   methods: {
     getStartIndex(scrollTop = 0) {
@@ -137,26 +104,17 @@ export default {
       // 所以bottom>scrollTop时，当前元素展示为第一个
       // 由于this.positions是顺序排列的数组，可以用二分查找法
       // let item = this.positions.find((i) => i && i.bottom > scrollTop);
-      let index = this.binarySearch(this.positions, scrollTop);
-      console.log("item.index", index);
-      return index;
-      // return Math.floor(this.scrollTop / this.itemSize);
+      // 这个条件下找出来的是显示在可视区域的第一个元素
+      return this.binarySearch(this.positions, scrollTop);
     },
     getStartOffset() {
-      // 滚动到
-      /* if (this.startIndex >= 1) {
-        return this.positions[this.startIndex - 1].bottom;
-      } else {
-        return 0;
-      } */
-      // const bufferSize = this.bufferCount * this.itemSize;
-      // const showIndex = this.startIndex + this.bufferCount;
-      // this.positions(())
-      console.log(this.positions[this.startIndex]);
-      if (this.startIndex >= 1) {
-        // const h = this.positions[this.startIndex].top;
-        // return this.scrollTop - bufferSize - (this.scrollTop % this.itemSize);
-        return this.positions[this.startIndex].top;
+      // this.startIndex - this.aboveCount  也就是缓存区本来渲染的第一个元素，开始不展示了
+      // 需要拿到它的top值，也就是需要平移的距离
+      // 当满足this.startIndex > this.aboveCount时，也就是this.aboveCount取值为this.bufferCount时
+      if (this.startIndex > this.bufferCount) {
+        const renderStartIndex = this.startIndex - this.bufferCount;
+        console.log("renderStartIndex", renderStartIndex);
+        return this.positions[renderStartIndex].top;
       } else {
         return 0;
       }
@@ -165,12 +123,11 @@ export default {
       this.scrollTop = event.target.scrollTop;
       console.log("scrollTop", event.target.scrollTop);
       this.startIndex = this.getStartIndex(this.scrollTop);
-      this.startOffset = this.getStartOffset();
       console.log("startIndex", this.startIndex);
-      // console.log("startOffset", this.startOffset);
+      this.startOffset = this.getStartOffset();
+      console.log("startOffset", this.startOffset);
     },
     initPositions() {
-      // console.log(this.listData);
       this.positions = this.listData.map((item, index) => {
         return {
           index,
@@ -187,7 +144,7 @@ export default {
       // 拿到中间值
       let start = 0;
       let end = list.length - 1;
-      let index = -1;
+      let index = end; // 超出范围时，取最后一个值
       let i = 0;
       while (end - start > 1) {
         i = Math.floor((start + end) / 2);
@@ -204,39 +161,44 @@ export default {
       if (list[start].bottom > value) {
         index = start;
       } else if (list[end].bottom > value) {
+        // 这里是修改后的end
         index = end;
       }
       return index;
     },
-  },
-  mounted() {
-    this.initPositions();
-    this.listHeight = this.positions[this.positions.length - 1].bottom;
-  },
-  updated() {
-    // 渲染完成后，获取列表每项的位置信息
-    const nodes = this.$refs.items;
-    // console.log(nodes);
-    nodes.forEach((node, index) => {
-      // Element.getBoundingClientRect() 方法返回一个 DOMRect 对象，其提供了元素的大小及其相对于视口的位置。
-      const rect = node.getBoundingClientRect();
-      const height = rect.height;
-      // ?
-      // const index = +node.id.slice(1);
-      const oldHeight = this.positions[index].height;
-      const diffValue = oldHeight - height;
-      if (diffValue) {
-        // 更新当前元素
-        this.positions[index].bottom = this.positions[index].bottom - diffValue;
-        this.positions[index].height = height;
-        // 更新后续所有元素
-        for (let k = index + 1; k < this.positions.length; k++) {
-          this.positions[k].top = this.positions[k - 1].bottom;
-          this.positions[k].bottom = this.positions[k].bottom - diffValue;
-        }
+    updatePositions() {
+      if (this.isPositionsUpdated) {
+        return;
       }
-    });
-    this.listHeight = this.positions[this.positions.length - 1].bottom;
+      console.log("updated————————");
+      // 渲染完成后，获取列表每项的位置信息
+      const nodes = this.$refs.items;
+      let index = 0;
+      nodes.forEach((node) => {
+        // Element.getBoundingClientRect() 方法返回一个 DOMRect 对象，其提供了元素的大小及其相对于视口的位置。
+        const rect = node.getBoundingClientRect();
+        const height = rect.height;
+        // 把id字符串变成数字，当前渲染的DOM结构
+        index = +node.id;
+        const oldHeight = this.positions[index].height;
+        const diffValue = oldHeight - height;
+        if (diffValue) {
+          // 更新当前元素
+          this.positions[index].bottom =
+            this.positions[index].bottom - diffValue;
+          this.positions[index].height = height;
+          // 更新后续所有元素
+          for (let k = index + 1; k < this.positions.length; k++) {
+            this.positions[k].top = this.positions[k - 1].bottom;
+            this.positions[k].bottom = this.positions[k].bottom - diffValue;
+          }
+        }
+      });
+      // 增加index判断，已经全部更新完成
+      if (index === this.positions.length - 1) {
+        this.isPositionsUpdated = true;
+      }
+    },
   },
 };
 </script>
@@ -268,5 +230,8 @@ export default {
   &:nth-child(2n + 1) {
     background-color: #f5ebff;
   } */
+  &:last-child {
+    border-bottom: none;
+  }
 }
 </style>
