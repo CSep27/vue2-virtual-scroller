@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <title>JS Bin</title>
+  <style>
+    #parent {
+      height: 500px;
+      width: 200px;
+      background-color: #fff;
+      border: 1px solid black;
+      overflow-y: auto;
+      position: relative;
+      margin-top: 30px;
+      box-sizing: border-box;
+    }
+
+    #child1 {
+      height: 1000px;
+      width: 100%;
+      background-color: #ebbdbd;
+    }
+
+    #child2 {
+      height: 100px;
+      width: 50%;
+      background-color: #e5ebbd;
+      position: absolute;
+      top: 0;
+    }
+
+    #child3 {
+      height: 100px;
+      width: 50%;
+      background-color: #c9ebbd;
+      position: absolute;
+      top: 100px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="parent">
+    <div id="child1"></div>
+    <div id="child2"></div>
+    <div id="child3"></div>
+  </div>
+</body>
+<script>
+  var io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((i) => {
+        // console.log("出现");
+        console.log("Time: " + i.time);
+        console.log("Target: " + i.target);
+        console.log("IntersectionRatio: " + i.intersectionRatio);
+        // 根元素的矩形区域的信息
+        console.log("rootBounds: " + i.rootBounds);
+        console.log("rootBounds: " + JSON.stringify(i.rootBounds));
+        // 目标元素的矩形区域的信息
+        console.log("boundingClientRect", i.boundingClientRect);
+        console.log("intersectionRect", i.intersectionRect);
+        console.log("isIntersecting", i.isIntersecting);
+        console.log("================");
+      });
+    },
+    {
+      /* Using default options. Details below */
+      root: document.querySelector("#parent"),
+      // threshold: [0]
+    }
+  );
+  // Start observing an element
+  io.observe(document.querySelector("#child2"));
+  io.observe(document.querySelector("#child3"));
+</script>
+
+</html>

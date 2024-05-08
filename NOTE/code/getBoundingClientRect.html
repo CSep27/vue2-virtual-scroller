@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+  <style>
+    #box {
+      height: 100px;
+      width: 200px;
+      background-color: gold;
+      padding: 10px;
+    }
+
+    #child {
+      height: 50px;
+      width: 50px;
+      background-color: rgb(213, 230, 247);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="box">
+    <div id="child"></div>
+  </div>
+</body>
+<script>
+  const box = document.getElementById("box");
+  const child = document.getElementById("child");
+  console.log(JSON.stringify(box.getBoundingClientRect()));
+  console.log(JSON.stringify(child.getBoundingClientRect()));
+  const boxRect = {
+    x: 8,
+    y: 8,
+    width: 200,
+    height: 100,
+    top: 8,
+    right: 208,
+    bottom: 108,
+    left: 8,
+  };
+  const childRect = {
+    x: 18,
+    y: 18,
+    width: 50,
+    height: 50,
+    top: 18,
+    right: 68,
+    bottom: 68,
+    left: 18,
+  };
+</script>
+
+</html>
