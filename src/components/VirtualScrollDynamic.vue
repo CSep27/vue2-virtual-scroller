@@ -33,10 +33,6 @@ export default {
       type: Number,
       default: 500,
     },
-    listData: {
-      type: Array,
-      default: () => [],
-    },
     // 缓冲区比例
     bufferScale: {
       type: Number,
@@ -47,6 +43,11 @@ export default {
       type: Number,
       default: 50,
     },
+    // 预估选项总条数，一共有多少条数据
+    estimatedTotal: {
+      type: Number,
+      default: 1000,
+    },
   },
   data() {
     return {
@@ -55,6 +56,8 @@ export default {
       startIndex: 0,
       startOffset: 0,
       isPositionsUpdated: false,
+      listData: [],
+      visibleData: [],
     };
   },
   computed: {
@@ -81,11 +84,19 @@ export default {
     belowCount() {
       return Math.min(this.endIndex, this.bufferCount);
     },
-    visibleData() {
-      const start = this.startIndex - this.aboveCount;
-      const end = this.endIndex + this.belowCount;
-      console.log("start, end", start, end);
-      return this.listData.slice(start, end);
+    start() {
+      return this.startIndex - this.aboveCount;
+    },
+    end() {
+      return this.endIndex + this.belowCount;
+    },
+  },
+  watch: {
+    start: {
+      handler(newVal) {
+        this.getData(newVal, this.end);
+      },
+      immediate: true,
     },
   },
   created() {
@@ -93,11 +104,27 @@ export default {
     // 列表渲染后存储每一项的高度以及位置
     this.positions = [];
     this.initPositions();
+    this.getData(this.start, this.end);
   },
   updated() {
     this.updatePositions();
   },
   methods: {
+    getData(start, end) {
+      const data = { start, end };
+      fetch("http://localhost:3000/list", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json;charset=utf-8",
+        },
+        body: JSON.stringify(data),
+      })
+        .then((response) => response.json())
+        .then((json) => {
+          this.visibleData = json;
+        })
+        .catch((err) => console.log("Request Failed", err));
+    },
     getStartIndex(scrollTop = 0) {
       // 起始索引，找到 bottom 位置大于 scrollTop 的元素，就是当前需要展示的第一个元素
       // 滚动在当前元素位置时，top会小于scrollTop，当bottom===scrollTop时，也就是当前元素滚动完毕，看不见了
@@ -121,21 +148,21 @@ export default {
     },
     onContainerScroll(event) {
       this.scrollTop = event.target.scrollTop;
-      console.log("scrollTop", event.target.scrollTop);
+      // console.log("scrollTop", event.target.scrollTop);
       this.startIndex = this.getStartIndex(this.scrollTop);
-      console.log("startIndex", this.startIndex);
+      // console.log("startIndex", this.startIndex);
       this.startOffset = this.getStartOffset();
-      console.log("startOffset", this.startOffset);
+      // console.log("startOffset", this.startOffset);
     },
     initPositions() {
-      this.positions = this.listData.map((item, index) => {
-        return {
-          index,
+      for (let i = 0; i < this.estimatedTotal; i++) {
+        this.positions.push({
+          i,
           height: this.estimatedItemSize,
-          top: index * this.estimatedItemSize,
-          bottom: (index + 1) * this.estimatedItemSize,
-        };
-      });
+          top: i * this.estimatedItemSize,
+          bottom: (i + 1) * this.estimatedItemSize,
+        });
+      }
     },
     // 二分查找 起始索引
     // list[i].bottom是递增的状态
